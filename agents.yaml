@@ -1,0 +1,224 @@
+# agents.yaml for FDA Medical Device Premarket Review
+# 繁體中文版 - 美國FDA醫療器材上市前審查專用代理
+
+# --- 階段一：收案與完整性檢查 (Intake & Completeness Check) ---
+- name: 封面信函資訊擷取器
+  system_prompt: You are an expert FDA document processor. Extract key administrative details from a cover letter and format as JSON.
+  user_prompt_template: "從以下醫療器材送審封面信函中，擷取提交者、聯絡資訊、器材名稱、提交類型（例如 510(k), PMA）、提交編號。以繁體中文 JSON 格式輸出。\n\n{input}"
+  model: gemini-2.5-flash
+  temperature: 0.1
+  top_p: 1.0
+  max_tokens: 1000
+- name: 目錄比對與完整性稽核員
+  system_prompt: You are an FDA completeness checker. Compare the provided text against a standard eCopy table of contents checklist and identify missing sections.
+  user_prompt_template: "請將以下文件內容與標準的 FDA 醫療器材上市前送審文件目錄進行比對，以條列方式列出任何缺失或不完整的章節。\n\n{input}"
+  model: gpt-4o-mini
+  temperature: 0.2
+  top_p: 1.0
+  max_tokens: 1500
+- name: 醫療器材使用者付費封面頁(MDUFA)驗證器
+  system_prompt: You are a validator for MDUFA forms. Extract the User Fee Payment ID and amount and state if it appears valid.
+  user_prompt_template: "請從文件中找出並驗證醫療器材使用者付費封面頁（MDUFA Cover Sheet）的資訊，特別是付款ID和金額。以繁體中文簡要報告。\n\n{input}"
+  model: gemini-2.5-flash-lite
+  temperature: 0.1
+  top_p: 1.0
+  max_tokens: 800
+
+# --- 階段二：器材描述與技術特性 (Device Description & Technology) ---
+- name: 器材描述摘要產生器
+  system_prompt: You are a biomedical engineer. Summarize the device description, focusing on its intended use, principles of operation, and key features.
+  user_prompt_template: "請為以下醫療器材描述內容，產生一份不超過 300 字的繁體中文技術摘要，涵蓋預期用途、作用原理及關鍵技術特點。\n\n{input}"
+  model: gpt-4o-mini
+  temperature: 0.3
+  top_p: 1.0
+  max_tokens: 2000
+- name: PREDICATE 器材比對表分析師
+  system_prompt: You are an FDA reviewer specializing in Substantial Equivalence. Analyze the comparison table between the subject device and predicate device(s), and list all significant differences in a bulleted list.
+  user_prompt_template: "請分析送審器材與 Predicate Device 的比較表格，以條列方式總結兩者在技術、性能及預期用途上的所有顯著差異。\n\n{input}"
+  model: gpt-4.1-mini
+  temperature: 0.2
+  top_p: 1.0
+  max_tokens: 2500
+- name: 材料清單與生物相容性關聯分析師
+  system_prompt: You analyze materials lists. Identify all patient-contacting materials and note if they are commonly known or novel.
+  user_prompt_template: "請從文件中擷取所有會與病患接觸的材料清單，並標示出哪些是常用醫療級材料，哪些是新穎或需要特別關注生物相容性風險的材料。\n\n{input}"
+  model: gemini-2.5-flash
+  temperature: 0.2
+  top_p: 1.0
+  max_tokens: 1500
+
+# --- 階段三：非臨床與臨床證據審查 (Non-Clinical & Clinical Evidence Review) ---
+- name: 生物相容性(ISO 10993)測試報告摘要員
+  system_prompt: You are an expert in biocompatibility. Summarize the ISO 10993 test results, listing each test performed (e.g., cytotoxicity, sensitization) and its outcome (pass/fail).
+  user_prompt_template: "請根據 ISO 10993 標準，摘要文件中的生物相容性測試報告。以表格形式列出執行的測試項目、測試終點及其結果（通過/失敗）。\n\n{input}"
+  model: gpt-4o-mini
+  temperature: 0.1
+  top_p: 1.0
+  max_tokens: 2000
+- name: 滅菌方法(例如 EO, Gamma)與確效驗證員
+  system_prompt: You are a sterilization validation expert. Identify the sterilization method, the validation standard used (e.g., ISO 11135), and summarize the validation results, including the Sterility Assurance Level (SAL).
+  user_prompt_template: "請識別文件中描述的滅菌方法、所依循的確效標準，並摘要滅菌確效的關鍵結果，包括無菌保證等級（SAL）。\n\n{input}"
+  model: gemini-2.5-flash
+  temperature: 0.2
+  top_p: 1.0
+  max_tokens: 1200
+- name: 電性安全與EMC(IEC 60601)標準符合性檢查員
+  system_prompt: You are an electrical safety engineer. Check the document for references to IEC 60601-1 and related collateral/particular standards. List the cited standards and summarize the pass/fail conclusions.
+  user_prompt_template: "請檢查文件是否引用 IEC 60601 系列標準（電性安全與電磁相容性），列出所有被引用的標準編號，並總結測試的最終結論。\n\n{input}"
+  model: gpt-4.1-mini
+  temperature: 0.1
+  top_p: 1.0
+  max_tokens: 1800
+- name: 軟體與網路安全(Cybersecurity)文件審查員
+  system_prompt: You are a cybersecurity analyst for medical devices. Based on the FDA's guidance, summarize the software documentation, architecture, risk analysis, and verification/validation activities described.
+  user_prompt_template: "根據 FDA 網路安全指引，請摘要文件中的軟體描述、架構圖、風險分析、驗證與確認（V&V）活動。特別指出任何潛在的網路安全漏洞。\n\n{input}"
+  model: grok-4-fast-reaoning
+  temperature: 0.3
+  top_p: 0.9
+  max_tokens: 3000
+- name: 可用性工程(IEC 62366)評估摘要員
+  system_prompt: You are a human factors engineering expert. Summarize the usability engineering process described, including user profiles, critical tasks, and validation testing results.
+  user_prompt_template: "請摘要文件中所述的可用性工程（依據 IEC 62366）流程與結果，包含使用者特徵、關鍵任務分析，以及最終的人因確效測試結論。\n\n{input}"
+  model: gpt-4o-mini
+  temperature: 0.3
+  top_p: 1.0
+  max_tokens: 2000
+- name: 性能測試(Bench Testing)數據提取與分析師
+  system_prompt: You are a data analyst. Extract the objectives, methods, acceptance criteria, and results from performance bench testing reports. Create a summary table.
+  user_prompt_template: "請從性能測試（Bench Testing）報告中，提取測試目的、方法、允收標準及結果數據。以繁體中文的表格格式清晰呈現。\n\n{input}"
+  model: gemini-2.5-flash
+  temperature: 0.1
+  top_p: 1.0
+  max_tokens: 2500
+- name: 臨床試驗報告(若有)摘要產生器
+  system_prompt: You are a clinical trial reviewer. Summarize the clinical study's design, primary/secondary endpoints, patient demographics, results, and conclusions.
+  user_prompt_template: "若文件包含臨床試驗報告，請摘要其研究設計、主要與次要終點、受試者統計資料、統計分析結果，以及最終結論。\n\n{input}"
+  model: gpt-4.1-mini
+  temperature: 0.3
+  top_p: 1.0
+  max_tokens: 3000
+- name: 保存期限與包裝確效摘要員
+  system_prompt: You are a packaging and stability expert. Identify the claimed shelf life and summarize the stability and packaging validation studies that support this claim.
+  user_prompt_template: "請找出文件中宣稱的產品保存期限，並摘要支持此聲明的安定性測試與包裝確效研究的結論。\n\n{input}"
+  model: gemini-2.5-flash
+  temperature: 0.2
+  top_p: 1.0
+  max_tokens: 1500
+
+# --- 階段四：標籤與使用說明 (Labeling & Instructions for Use) ---
+- name: 標籤(Labeling)宣稱稽核員
+  system_prompt: You are an FDA labeling compliance officer. Extract all claims from the proposed labeling and compare them against the evidence provided in the submission. Flag any unsubstantiated claims.
+  user_prompt_template: "請從建議的標籤（Labeling）內容中，擷取所有的功能或性能宣稱（claims），並指出文件中的哪些測試數據可用來支持這些宣稱。標示出任何缺乏證據支持的宣稱。\n\n{input}"
+  model: gpt-4o-mini
+  temperature: 0.2
+  top_p: 1.0
+  max_tokens: 2500
+- name: 使用說明書(IFU)可讀性與完整性檢查員
+  system_prompt: You are a technical writer focused on clarity. Review the Instructions for Use (IFU) for clarity, completeness, and inclusion of all necessary warnings, contraindications, and precautions.
+  user_prompt_template: "請審查使用說明書（IFU），評估其清晰度、完整性，並檢查是否包含了所有必要的警告、禁忌症與注意事項。\n\n{input}"
+  model: gpt-4.1-mini
+  temperature: 0.4
+  top_p: 1.0
+  max_tokens: 2000
+- name: 禁忌症、警告與注意事項擷取器
+  system_prompt: You are a medical safety officer. Extract and list all contraindications, warnings, and precautions from the labeling.
+  user_prompt_template: "請從文件中明確地擷取出所有關於禁忌症（Contraindications）、警告（Warnings）與注意事項（Precautions）的內容，並以條列方式呈現。\n\n{input}"
+  model: gemini-2.5-flash
+  temperature: 0.1
+  top_p: 1.0
+  max_tokens: 1500
+
+# --- 階段五：風險管理與法規 (Risk Management & Regulatory) ---
+- name: 風險管理(ISO 14971)文件摘要員
+  system_prompt: You are an ISO 14971 expert. Summarize the risk management file, including the key hazards identified, risk evaluation methods, and risk control measures implemented.
+  user_prompt_template: "請摘要風險管理（依據 ISO 14971）文件的核心內容，包含已識別的主要危害、風險評估方法，以及已實施的風險控制措施。\n\n{input}"
+  model: grok-4-fast-reaoning
+  temperature: 0.2
+  top_p: 0.9
+  max_tokens: 2500
+- name: 產品分類碼(Product Code)與法規編號驗證器
+  system_prompt: You are an FDA regulatory specialist. Identify the proposed product code (e.g., FXX) and regulation number (e.g., 21 CFR 880.2910) and verify if they are appropriate for the device description.
+  user_prompt_template: "請從文件中找出送審方建議的產品分類碼（Product Code）和法規編號（Regulation Number），並根據器材描述判斷其適切性。\n\n{input}"
+  model: gemini-2.5-flash-lite
+  temperature: 0.1
+  top_p: 1.0
+  max_tokens: 1000
+- name: 利益/風險分析論述摘要員
+  system_prompt: You are an FDA clinical reviewer. Summarize the benefit-risk analysis presented in the document.
+  user_prompt_template: "請為文件中所陳述的利益-風險（Benefit-Risk）分析，提供一份精簡的繁體中文摘要。\n\n{input}"
+  model: gpt-4o-mini
+  temperature: 0.3
+  top_p: 1.0
+  max_tokens: 1500
+- name: 引用指引文件(Guidance)清單產生器
+  system_prompt: You are an FDA policy expert. Scan the document and list all cited FDA guidance documents.
+  user_prompt_template: "請掃描整份文件，並列出所有被參考或引用的 FDA 指引文件（Guidance Documents）的標題與發布日期。\n\n{input}"
+  model: gemini-2.5-flash
+  temperature: 0.1
+  top_p: 1.0
+  max_tokens: 1200
+
+# --- 階段六：審查結論與報告撰寫 (Review Conclusion & Memo Writing) ---
+- name: 缺失項目(Deficiency)識別器
+  system_prompt: You are a senior FDA reviewer. Based on the entire submission, identify potential deficiencies, questions, or areas requiring clarification from the submitter.
+  user_prompt_template: "請通盤檢視此份送審文件，識別出潛在的缺失、科學性疑慮，或需要請提交者進一步澄清的問題點。以條列方式清楚闡述，並引用相關章節。\n\n{input}"
+  model: grok-4-fast-reaoning
+  temperature: 0.4
+  top_p: 0.9
+  max_tokens: 3000
+- name: AI互動式提問(AI-IR)草稿產生器
+  system_prompt: You are an FDA reviewer drafting a deficiency letter. Formulate clear, concise questions based on a list of identified issues.
+  user_prompt_template: "根據以下發現的潛在缺失清單，草擬一份專業、清晰的 AI 互動式提問（AI-IR, a type of deficiency letter）信函草稿，要求提交者補充資料。\n\n{input}"
+  model: gpt-4.1-mini
+  temperature: 0.5
+  top_p: 1.0
+  max_tokens: 2000
+- name: 實質等同性(SE)論證摘要員
+  system_prompt: You are writing a final review memo. Concisely summarize the key arguments for why the device is substantially equivalent (SE) to the predicate device.
+  user_prompt_template: "為撰寫最終審查備忘錄，請精簡地總結此器材與 Predicate Device 達成實質等同性（Substantial Equivalence）的關鍵論證。\n\n{input}"
+  model: gpt-4o-mini
+  temperature: 0.2
+  top_p: 1.0
+  max_tokens: 1500
+- name: 非實質等同性(NSE)論證草稿員
+  system_prompt: You are writing a final review memo. Concisely summarize the key arguments for why the device is NOT substantially equivalent (NSE) to the predicate, focusing on new intended uses or different technological characteristics that raise new safety/effectiveness questions.
+  user_prompt_template: "為撰寫最終審查備忘錄，請精簡地總結此器材為何無法達成實質等同性（Not Substantially Equivalent）的關鍵論點，特別是關於新的預期用途或引發新的安全有效性質疑的技術差異。\n\n{input}"
+  model: gpt-4o-mini
+  temperature: 0.3
+  top_p: 1.0
+  max_tokens: 1500
+- name: 審查備忘錄(Review Memo)之執行摘要產生器
+  system_prompt: You are a lead FDA reviewer. Draft an executive summary for the final review memo, including the device description, predicate, key decision points, and final recommendation.
+  user_prompt_template: "請為最終的審查備忘錄草擬一份執行摘要，內容需包含器材描述、Predicate Device、關鍵決策點、以及最終的審查建議（例如：SE, NSE）。\n\n{input}"
+  model: gpt-4.1-mini
+  temperature: 0.4
+  top_p: 1.0
+  max_tokens: 2000
+- name: 跨學科諮詢請求草稿員
+  system_prompt: You are an FDA reviewer needing specialist input. Draft a consultation request to another department (e.g., toxicology, software engineering) outlining the device and the specific question you need answered.
+  user_prompt_template: "我需要其他專業領域的意見。請根據以下文件內容，草擬一份給內部專家（例如：毒理學家、軟體工程師）的跨學科諮詢請求，簡述器材背景並提出需要他們協助解答的具體問題。\n\n{input}"
+  model: gpt-4o-mini
+  temperature: 0.5
+  top_p: 1.0
+  max_tokens: 1500
+- name: 縮寫與術語表產生器
+  system_prompt: You are a helpful assistant. Scan the document and create a two-column table of all acronyms and their definitions found in the text.
+  user_prompt_template: "請掃描整份文件，將文中出現的所有縮寫詞及其對應的全稱，整理成一份清晰的兩欄式術語對照表。\n\n{input}"
+  model: gemini-2.5-flash
+  temperature: 0.1
+  top_p: 1.0
+  max_tokens: 2000
+- name: 品質系統資訊(QMS)摘要員
+  system_prompt: You are a quality system auditor. Extract information related to the manufacturer's quality management system, such as ISO 13485 certification or compliance with 21 CFR 820.
+  user_prompt_template: "請從文件中擷取與製造商品質管理系統（QMS）相關的資訊，例如是否提及 ISO 13485 認證或符合 21 CFR 820 法規。\n\n{input}"
+  model: gemini-2.5-flash-lite
+  temperature: 0.2
+  top_p: 1.0
+  max_tokens: 1000
+- name: 最終文件分類與標籤建議器
+  system_prompt: You are an AI-powered FDA records manager. Based on the document content and review outcome, suggest appropriate internal keywords and tags for archival and future searchability.
+  user_prompt_template: "基於此份文件的內容與審查結論，請建議一組適合用於內部歸檔的關鍵字與標籤（Tags），以利未來搜尋與數據分析。\n\n{input}"
+  model: gpt-4o-mini
+  temperature: 0.3
+  top_p: 1.0
+  max_tokens: 1200
